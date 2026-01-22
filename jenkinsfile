@@ -1,0 +1,67 @@
+@Library('shared-library') _
+
+pipeline {
+    agent { label 'Jenkins-Agent1' }
+
+    options {
+        timestamps()
+    }
+
+    environment {
+        GIT_REPO = 'https://github.com/sanjayg2816-cell/shared-library.git'
+        BRANCH   = 'main'
+        DEPLOY_ENV = 'dev'
+    }
+
+    stages {
+
+        stage('Clean Workspace') {
+            steps {
+                cleanWorkspace()
+            }
+        }
+
+        stage('Checkout') {
+            steps {
+                git branch: BRANCH,
+                    url: GIT_REPO,
+                    credentialsId: 'f0f0aa3c-7ce6-47a2-9cf0-248f976040e9'
+            }
+        }
+
+        stage('Build') {
+            steps {
+                buildApp()
+            }
+        }
+
+        stage('Unit Test') {
+            steps {
+                unitTest()
+            }
+        }
+
+        stage('Deploy') {
+            when {
+                branch 'main'
+            }
+            steps {
+                deployApp(DEPLOY_ENV)
+            }
+        }
+    }
+
+    post {
+        always {
+            postBuildActions()
+        }
+
+        failure {
+            echo "Build Failed!"
+        }
+
+        success {
+            echo "Build Successful!"
+        }
+    }
+}
